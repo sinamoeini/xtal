@@ -14,6 +14,7 @@ public:
     int no_types;
     char** atom_names;
     type0* mass;
+    int* type_count;
     
     type0** H;
     type0** B;
@@ -28,12 +29,16 @@ public:
     void join(Box*,Box*,int);
     ~Box();
     int add_type(type0,char*);
+    int find_type(char*);
     void add_atoms(int,int*,type0*);
+    void del_atoms(int,int*);
     void change_name(char*);
     void add_name(char*);
     void mul(int*);
     void add_vac(int,type0);
     void ucell_chang(type0**);
+    void id_correction();
+    void del_type(int);
 };
 
 #endif

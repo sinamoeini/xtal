@@ -1,19 +1,17 @@
 #include "command_ls_box.h"
 #include "error.h"
-#include "xtal.h"
+#include "box_collection.h"
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
 Command_ls_box::Command_ls_box(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
-    char** cmds=xtal->cmds_lst;
-    int no_cmds=xtal->no_cmds;
-    int no_vals=xtal->no_vals;
-    
-    for(int i=no_cmds;i<no_cmds+no_vals;i++)
-        printf("%s\n",cmds[i]);
-    
+
+    printf("\n");
+    for(int i=0;i<box_collection->no_boxes;i++)
+        printf("%s\n",box_collection->boxes[i]->box_name);
+    printf("\n");
 
 }
 /*--------------------------------------------

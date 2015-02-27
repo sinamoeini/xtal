@@ -20,7 +20,8 @@ xtal:	prep $(OBJ_FILES) $(MAKEFILE)
 	$(CC) $(CFLAGS) $(OBJ_FILES) $(LIBS) -o $@ $(INCLUDES)
 
 clean:  
-	rm -rf $(OBJ)
+	@rm -rf $(OBJ); \
+	rm -rf xtal
 prep:
 	@mkdir -p $(OBJ); \
 	cd src; \
@@ -28,4 +29,10 @@ prep:
 	for i in `ls command_*.h`; do \
 	echo \#include \"$$i\" >>command_styles.h; \
 	done; \
+        rm -rf region_styles.h; \
+        for i in `ls region_*.h`; do \
+	if [ "$$i" != "region_collection.h" ]; \
+	then echo \#include \"$$i\" >>region_styles.h; \
+	fi; \
+        done; \
 	cd ..

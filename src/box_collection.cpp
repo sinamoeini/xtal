@@ -19,8 +19,9 @@ BoxCollection::~BoxCollection()
         
         delete boxes[ibox];
     }
-    
-    delete [] boxes;
+
+    if(no_boxes)
+        delete [] boxes;
     
     no_boxes=0;
     

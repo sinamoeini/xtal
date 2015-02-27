@@ -42,6 +42,7 @@ Box2CFG::Box2CFG(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
     int icomp;
     for(int itype=0;itype<no_types;itype++)
     {
+        
         fprintf(cfgfile,"%lf \n%s \n",mass[itype],atom_names[itype]);
         icomp=0;
         for(int iatm=0;iatm<natms;iatm++)

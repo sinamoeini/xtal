@@ -87,7 +87,8 @@ public:
     xtal(ptr),
     memory(ptr->memory),
     error(ptr->error),
-    box_collection(ptr->box_collection)
+    box_collection(ptr->box_collection),
+    region_collection(ptr->region_collection)
     {}
     virtual ~InitPtrs(){}
 protected:
@@ -95,6 +96,7 @@ protected:
     Memory*& memory;
     Error*& error;
     BoxCollection*& box_collection;
+    RegionCollection*& region_collection;
 };
 
 #endif

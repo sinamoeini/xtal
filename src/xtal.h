@@ -22,6 +22,7 @@ public:
     class Memory* memory;
     class Error* error;
     class BoxCollection* box_collection;
+    class RegionCollection* region_collection;
     
     Xtal(int,char**);
     ~Xtal();

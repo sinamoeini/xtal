@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "error.h"
 #include "box_collection.h"
+#include "region_collection.h"
 #include "command_styles.h"
 char** cmd;
 /*--------------------------------------------
@@ -13,6 +14,7 @@ Xtal::Xtal(int narg,char** args)
     memory=new Memory;
     error=new Error(this);
     box_collection=new BoxCollection(this);
+    region_collection=new RegionCollection(this);
     
     input_file=NULL;
     input_file=stdin;
@@ -66,6 +68,7 @@ Xtal::Xtal(int narg,char** args)
  --------------------------------------------*/
 Xtal::~Xtal()
 {
+    delete region_collection;
     delete box_collection;
     delete error;
     delete memory;
@@ -224,10 +227,11 @@ void Xtal::concatenate(int narg,char** args
  --------------------------------------------*/
 void Xtal::read_line()
 {
-    
+    /*
     rl_readline_name=(char*)"xtal-0.0$ ";
     rl_attempted_completion_function=completion;
-    
+    */
+    rl_completion_entry_function=(Function*)command_generator;
     FILE* tmp_input;
     tmp_input=fopen(".input","w");
     char* line,shell_prompt[100];
@@ -407,31 +411,41 @@ void Xtal::add_vals()
 
     char** cmd_tmp;
     int no_boxes=box_collection->no_boxes;
-    int size=no_cmds+no_boxes+1;
+    int no_regions=region_collection->no_regions;
+    int icurs=0;
+    int size=no_cmds+no_boxes+no_regions+1;
     CREATE1D(cmd_tmp,size);
     for(int i=0;i<no_cmds;i++)
     {
         size=static_cast<int>(strlen(cmd[i]))+1;
-        CREATE1D(cmd_tmp[i],size);
-        memcpy(cmd_tmp[i],cmd[i],size*sizeof(char));
+        CREATE1D(cmd_tmp[icurs],size);
+        memcpy(cmd_tmp[icurs],cmd[i],size*sizeof(char));
+        icurs++;
     }
     for(int i=0;i<no_boxes;i++)
     {
         size=static_cast<int>(strlen(box_collection->boxes[i]->box_name))+1;
-        CREATE1D(cmd_tmp[no_cmds+i],size);
-        memcpy(cmd_tmp[no_cmds+i],box_collection->boxes[i]->box_name,size*sizeof(char));
+        CREATE1D(cmd_tmp[icurs],size);
+        memcpy(cmd_tmp[icurs],box_collection->boxes[i]->box_name,size*sizeof(char));
+        icurs++;
+    }
+    for(int i=0;i<no_regions;i++)
+    {
+        size=static_cast<int>(strlen(region_collection->regions[i]->region_name))+1;
+        CREATE1D(cmd_tmp[icurs],size);
+        memcpy(cmd_tmp[icurs],region_collection->regions[i]->region_name,size*sizeof(char));
+        icurs++;
     }
     
-    
-    CREATE1D(cmd_tmp[no_boxes+no_cmds],2);
+    CREATE1D(cmd_tmp[icurs],2);
     size=static_cast<int>(strlen("\r"))+1;
-    memcpy(cmd_tmp[no_boxes+no_cmds],"\r",sizeof(char)*size);
+    memcpy(cmd_tmp[icurs],"\r",sizeof(char)*size);
     
     for(int i=0;i<no_vals+no_cmds+1;i++)
         delete [] cmd[i];
     delete [] cmd;
     
-    no_vals=box_collection->no_boxes;
+    no_vals=no_boxes+no_regions;
     cmd=cmd_tmp;
     cmds_lst=cmd;
 
