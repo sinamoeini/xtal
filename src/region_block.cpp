@@ -45,6 +45,26 @@ Region_block::Region_block(Xtal* xtal
             {
                 bond[2*i]=tmp0;
                 bond[2*i+1]=tmp1;
+                
+                if(tmp0<0.0 || tmp0>=1.0)
+                {
+                    error->warning("block boundary should between 0.0 & 1.0");
+                    xtal->error_flag=-1;
+                    return;
+                }
+                if(tmp1<0.0 || tmp1>=1.0)
+                {
+                    error->warning("block boundary should between 0.0 & 1.0");
+                    xtal->error_flag=-1;
+                    return;
+                }
+                if(tmp0>=tmp1)
+                {
+                    error->warning("higher block boundary should be greater than lower one");
+                    xtal->error_flag=-1;
+                    return;
+                }
+                
             }
             else
             {
@@ -52,11 +72,25 @@ Region_block::Region_block(Xtal* xtal
                 {
                     bond_st[2*i]=0;
                     bond[2*i+1]=tmp1;
+                    
+                    if(tmp1<0.0 || tmp1>=1.0)
+                    {
+                        error->warning("block boundary should between 0.0 & 1.0");
+                        xtal->error_flag=-1;
+                        return;
+                    }
                 }
                 else if(sscanf(arg[2+i],"(%lf,none)",&tmp0)==1)
                 {
                     bond_st[2*i+1]=0;
                     bond[2*i]=tmp0;
+                    
+                    if(tmp0<0.0 || tmp0>=1.0)
+                    {
+                        error->warning("block boundary should between 0.0 & 1.0");
+                        xtal->error_flag=-1;
+                        return;
+                    }
                 }
                 else
                 {
@@ -86,7 +120,7 @@ Region_block::Region_block(Xtal* xtal
             }
         }
     }
-    
+
 }
 /*--------------------------------------------
  destructor
@@ -105,38 +139,34 @@ Region_block::~Region_block()
 /*--------------------------------------------
  belong
  --------------------------------------------*/
-int Region_block::belong(type0** H,type0* s)
+inline int Region_block::belong(type0** H,type0* s)
 {
     
-    x=H[0][0]*s[0]+H[1][0]*s[1]+H[2][0]*s[2];
-    y=H[1][1]*s[1]+H[2][1]*s[2];
-    z=H[2][2]*s[2];
-    
+   
     if(bond_st[0])
-        if (x<bond[0])
+        if (s[0]<bond[0])
             return 0;
     
     if(bond_st[1])
-        if (bond[1]<=x)
+        if (bond[1]<=s[0])
             return 0;
 
     if(bond_st[2])
-        if (y<bond[2])
+        if (s[1]<bond[2])
             return 0;
     
     if(bond_st[3])
-        if (bond[3]<=y)
+        if (bond[3]<=s[1])
             return 0;
     
     if(bond_st[4])
-        if (z<bond[4])
+        if (s[2]<bond[4])
             return 0;
     
     if(bond_st[5])
-        if (bond[5]<=z)
+        if (bond[5]<=s[2])
             return 0;
 
-    
     return 1;
     
 }

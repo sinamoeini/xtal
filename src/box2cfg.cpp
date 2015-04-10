@@ -10,18 +10,19 @@ Box2CFG::Box2CFG(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
 {
     cfgfile=fopen(name,"w");
 
-    
-    int no_types=box_collection->ret_no_types(box);
-    char** atom_names=box_collection->ret_atom_names(box);
-    type0* mass=box_collection->ret_mass(box);
+    int ibox=box_collection->find(box);
     
     
-    type0** H=box_collection->ret_H(box);
-    //type0** B=box_collection->ret_B(box);
+    int no_types=box_collection->boxes[ibox]->no_types;
+    char** atom_names=box_collection->boxes[ibox]->atom_names;
+    type0* mass=box_collection->boxes[ibox]->mass;
     
-    int natms=box_collection->ret_natms(box);
-    type0* s=box_collection->ret_s(box);
-    int* type=box_collection->ret_type(box);
+    
+    type0** H=box_collection->boxes[ibox]->H;
+    
+    int natms=box_collection->boxes[ibox]->natms;
+    type0* s=box_collection->boxes[ibox]->s;
+    int* type=box_collection->boxes[ibox]->type;
     
     
     
@@ -31,7 +32,7 @@ Box2CFG::Box2CFG(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
     
     for(int i=0;i<3;i++)
         for(int j=0;j<3;j++)
-            fprintf(cfgfile,"H0(%d,%d) = %lf A\n",i+1,j+1,H[i][j]);
+            fprintf(cfgfile,"H0(%d,%d) = %20.16lf A\n",i+1,j+1,H[i][j]);
     
     fprintf(cfgfile,".NO_VELOCITY.\n");
     fprintf(cfgfile,"entry_count = %d\n",3);
@@ -48,8 +49,9 @@ Box2CFG::Box2CFG(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
         for(int iatm=0;iatm<natms;iatm++)
         {
             if(type[iatm]==itype)
-                fprintf(cfgfile,"%lf %lf %lf\n",s[icomp],s[icomp+1],s[icomp+2]);
-            
+            {
+                fprintf(cfgfile,"%18.16lf %18.16lf %18.16lf\n",s[icomp],s[icomp+1],s[icomp+2]);
+            }
             icomp+=3;
         }
     }

@@ -55,8 +55,9 @@ int narg,char** arg):InitPtrs(xtal)
     CREATE1D(eps_1,3);
     
     
-    type0** H0=box_collection->ret_H(arg[1]);
-    type0** H1=box_collection->ret_H(arg[2]);
+    
+    type0** H0=box_collection->boxes[ibox0]->H;
+    type0** H1=box_collection->boxes[ibox1]->H;
     type0 tmp,tmp0,tmp1;
     for(int i=0;i<3;i++)
     {
@@ -81,8 +82,8 @@ int narg,char** arg):InitPtrs(xtal)
         
     }
     
-    int natms0=box_collection->ret_natms(arg[1])*n0[0]*n0[1]*n0[2];
-    int natms1=box_collection->ret_natms(arg[2])*n1[0]*n1[1]*n1[2];
+    int natms0=box_collection->boxes[ibox0]->natms*n0[0]*n0[1]*n0[2];
+    int natms1=box_collection->boxes[ibox1]->natms*n1[0]*n1[1]*n1[2];
     
     printf("\n");
     printf("%s: %d atoms\n",arg[1],natms0);

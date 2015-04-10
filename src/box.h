@@ -8,7 +8,7 @@ class Box:protected InitPtrs
 private:
 protected:
 public:
-    
+    int dof_xst;
     char* box_name;
     
     int no_types;
@@ -22,6 +22,7 @@ public:
     int natms;
     type0* s;
     int* type;
+    char* dof;
     
     
     Box(Xtal*);
@@ -31,6 +32,7 @@ public:
     int add_type(type0,char*);
     int find_type(char*);
     void add_atoms(int,int*,type0*);
+    void add_atoms(int,int*,type0*,char*);
     void del_atoms(int,int*);
     void change_name(char*);
     void add_name(char*);

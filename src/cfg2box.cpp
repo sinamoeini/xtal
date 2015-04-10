@@ -6,8 +6,11 @@
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-CFG2Box::CFG2Box(Xtal* xtal,char* b,char* name):InitPtrs(xtal)
+CFG2Box::CFG2Box(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
 {
+    ibox=box_collection->find(box);
+    
+    basic_length=1.0;
     xtal->error_flag=0;
     tmp_natms=0;
     file_name=name;
@@ -18,7 +21,6 @@ CFG2Box::CFG2Box(Xtal* xtal,char* b,char* name):InitPtrs(xtal)
         xtal->error_flag=-1;
         return;
     }
-    box=b;
     
     alloc();
     
@@ -90,7 +92,11 @@ CFG2Box::CFG2Box(Xtal* xtal,char* b,char* name):InitPtrs(xtal)
         return;
     }
     
-    box_collection->add_atoms(box,tmp_natms,type_buff,s_buff);
+    
+    
+    
+
+    box_collection->boxes[ibox]->add_atoms(tmp_natms,type_buff,s_buff);
     
     delete [] s_buff;
     delete [] type_buff;
@@ -376,12 +382,14 @@ void CFG2Box::set_box()
                 for (int k=0;k<3;k++)
                     H_x[i][j]+=H0[i][k]*eta_sq[k][j];
     }
+
+    
     
     for (int i=0;i<3;i++)
         for (int j=0;j<3;j++)
         {
             H_x[i][j]*=basic_length;
-            box_collection->ret_H(box)[i][j]=H_x[i][j];
+            box_collection->boxes[ibox]->H[i][j]=H_x[i][j];
         }
     
     if (M3DET(H_x)==0.0)
@@ -428,9 +436,9 @@ void CFG2Box::set_box()
         Ht[2][2]+=H_x[2][i]*b[i];
     Ht[2][1]=sqrt(sq[2]-Ht[2][2]*Ht[2][2]-Ht[2][0]*Ht[2][0]);
     
-    M3EQV(Ht,box_collection->ret_H(box));
+    M3EQV(Ht,box_collection->boxes[ibox]->H);
     M3EQV(Ht,H_x);
-    M3INV(box_collection->ret_H(box),box_collection->ret_B(box),det);
+    M3INV(box_collection->boxes[ibox]->H,box_collection->boxes[ibox]->B,det);
     
     
 }
@@ -614,7 +622,8 @@ void CFG2Box::read_atom()
                 xtal->error_flag=-1;
                 return;
             }
-            last_type=box_collection->add_type(box,mass,arg[0]);
+            
+            last_type=box_collection->boxes[ibox]->add_type(mass,arg[0]);
         }
         else if(narg==entry_count)
         {
@@ -644,7 +653,7 @@ void CFG2Box::read_atom()
         if(narg==8)
         {
             mass=static_cast<type0>(atof(arg[0]));
-            last_type=box_collection->add_type(box,mass,arg[1]);
+            last_type=box_collection->boxes[ibox]->add_type(mass,arg[1]);
             if(mass<=0.0)
             {
                 error->warning("mass of %s %s file (%lf) should be greater than 0.0",arg[1],file_name,line,mass);

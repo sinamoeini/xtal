@@ -105,60 +105,9 @@ void BoxCollection::del(char* name)
     del(ibox);
 }
 /*--------------------------------------------
- join two boxes together to create a new box
- the new box is already added to collection
- and it has a name i.e.
- H B and box_name are allocated
- and box_name is assigned
- --------------------------------------------*/
-void BoxCollection::join(char* box,char* box0,
-char* box1,int dim)
-{
-
-    int ibox;
-    int ibox0=find(box0);
-    int ibox1=find(box1);
-    
-    
-    if(strcmp(box,box0)==0 && strcmp(box,box1)!=0)
-    {
-        ibox=add_unsafe();
-        boxes[ibox]->join(boxes[ibox0],boxes[ibox1],dim);
-        boxes[ibox]->add_name(box0);
-        del(ibox0);
-    }
-    else if(strcmp(box,box0)!=0 && strcmp(box,box1)==0)
-    {
-        ibox=add_unsafe();
-        boxes[ibox]->join(boxes[ibox0],boxes[ibox1],dim);
-        boxes[ibox]->add_name(box1);
-        del(ibox1);
-    }
-    else if(strcmp(box,box0)==0 && strcmp(box,box1)==0)
-    {
-        ibox=add_unsafe();
-        boxes[ibox]->join(boxes[ibox0],boxes[ibox1],dim);
-        boxes[ibox]->add_name(box0);
-        del(ibox0);
-    }
-    else
-    {
-        ibox=find(box);
-        int box_exist=1;
-        if(ibox<0)
-        {
-            box_exist=0;
-            ibox=add_unsafe();
-        }
-        boxes[ibox]->join(boxes[ibox0],boxes[ibox1],dim);
-        if(box_exist==0)
-            boxes[ibox]->add_name(box);
-        
-    }
-}
-/*--------------------------------------------
  multiply a box
  --------------------------------------------*/
+/*
 void BoxCollection::mul(char* box,int* n)
 {
     boxes[find(box)]->mul(n);
@@ -211,3 +160,4 @@ int* BoxCollection::ret_type(char* box)
     return boxes[find(box)]->type;
 }
 
+*/

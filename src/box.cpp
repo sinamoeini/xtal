@@ -1,13 +1,14 @@
 #include "box.h"
 #include <math.h>
 #include "memory.h"
+#include "xmath.h"
 
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
 Box::Box(Xtal* xtal):InitPtrs(xtal)
 {
-    natms=no_types=0;
+    natms=no_types=dof_xst=0;
     CREATE2D(H,3,3);
     CREATE2D(B,3,3);
 }
@@ -16,7 +17,7 @@ Box::Box(Xtal* xtal):InitPtrs(xtal)
  --------------------------------------------*/
 Box::Box(Xtal* xtal,char* name):InitPtrs(xtal)
 {
-    natms=no_types=0;
+    natms=no_types=dof_xst=0;
     CREATE2D(H,3,3);
     CREATE2D(B,3,3);
     int lngth=static_cast<int>(strlen(name))+1;
@@ -43,17 +44,22 @@ void Box::join(Box* box0,Box* box1,int dim)
     {
         delete [] s;
         delete [] type;
+        
+        if(dof_xst)
+            delete [] dof;
     }
-    natms=no_types=0;
+    natms=no_types=dof_xst=0;
     
     //allocate s and type
     natms=box0->natms+box1->natms;
     CREATE1D(s,natms*3);
     CREATE1D(type,natms);
     
+    dof_xst=box0->dof_xst;
+    if(dof_xst)
+        CREATE1D(dof,natms*3);
     
     // add the tyoes
-    
     for(int i=0;i<box0->no_types;i++)
     {
         add_type(box0->mass[i],box0->atom_names[i]);
@@ -69,11 +75,20 @@ void Box::join(Box* box0,Box* box1,int dim)
         type_count[type_ref[i]]+=box1->type_count[i];
     }
     
-    for(int iatom=0;iatom<box0->natms;iatom++)
+    for(int iatom=0;iatom<3*box0->natms;iatom++)
         type[iatom]=box0->type[iatom];
+    
+    if(dof_xst)
+        for(int iatom=0;iatom<box0->natms;iatom++)
+            dof[iatom]=box0->dof[iatom];
     
     for(int iatom=0;iatom<box1->natms;iatom++)
         type[box0->natms+iatom]=type_ref[box1->type[iatom]];
+
+    if(dof_xst)
+        for(int iatom=0;iatom<3*box1->natms;iatom++)
+            dof[3*box0->natms+iatom]=box1->dof[iatom];
+    
     
     delete [] type_ref;
     // we are done with type
@@ -187,6 +202,9 @@ Box::~Box()
     {
         delete [] s;
         delete [] type;
+        
+        if(dof_xst)
+            delete [] dof;
     }
     
 }
@@ -260,6 +278,39 @@ void Box::add_atoms(int no,int* type_buff,type0* s_buff)
     natms+=no;
 }
 /*--------------------------------------------
+ add an array of atoms
+ --------------------------------------------*/
+void Box::add_atoms(int no,int* type_buff
+,type0* s_buff,char* dof_buff)
+{
+    
+    
+    GROW(s,natms*3,(natms+no)*3);
+    GROW(type,natms,natms+no);
+    if(dof_xst)
+        GROW(dof,natms*3,(natms+no)*3);
+    
+    for(int i=0;i<no*3;i++)
+    {
+        while(s_buff[i]<0.0)
+            s_buff[i]++;
+        while(s_buff[i]>=1.0)
+            s_buff[i]--;
+        s[natms*3+i]=s_buff[i];
+    }
+    for(int i=0;i<no;i++)
+    {
+        type[natms+i]=type_buff[i];
+        type_count[type_buff[i]]++;
+    }
+    
+    if(dof_xst)
+        for(int i=0;i<no*3;i++)
+            dof[natms*3+i]=dof_buff[i];
+    
+    natms+=no;
+}
+/*--------------------------------------------
  del a list of atoms
  --------------------------------------------*/
 void Box::del_atoms(int no,int* lst)
@@ -269,14 +320,25 @@ void Box::del_atoms(int no,int* lst)
     {
         type_count[type[lst[i]]]--;
         memcpy(&s[3*lst[i]],&s[3*(natms-1)],3*sizeof(type0));
+        if(dof_xst)
+            memcpy(&dof[3*lst[i]],&dof[3*(natms-1)],3*sizeof(char));
         memcpy(&type[lst[i]],&type[natms-1],sizeof(int));
+        
         natms--;
     }
     
     type0* s_tmp;
     int* type_tmp;
+    char* dof_tmp=NULL;
     CREATE1D(s_tmp,3*natms);
     CREATE1D(type_tmp,natms);
+    
+    if(dof_xst)
+    {
+        CREATE1D(dof_tmp,3*natms);
+        memcpy(dof_tmp,dof,3*natms*sizeof(char));
+    }
+    
     memcpy(s_tmp,s,3*natms*sizeof(type0));
     memcpy(type_tmp,type,natms*sizeof(int));
     
@@ -284,10 +346,14 @@ void Box::del_atoms(int no,int* lst)
     {
         delete [] s;
         delete [] type;
+        if(dof_xst)
+            delete [] dof;
     }
     
     s=s_tmp;
     type=type_tmp;
+    if(dof_xst)
+        dof=dof_tmp;
     
     for(int itype=0;itype<no_types;itype++)
         if(type_count[itype]==0)
@@ -340,8 +406,12 @@ void Box::mul(int* n)
     
     type0* tmp_s;
     int* tmp_type;
+    char* tmp_dof=NULL;
+    
     CREATE1D(tmp_s,tmp_natms*3);
     CREATE1D(tmp_type,tmp_natms);
+    if(dof_xst)
+        CREATE1D(tmp_dof,tmp_natms*3);
     
     int icomp=0;
     int tmp_icomp=0;
@@ -355,7 +425,11 @@ void Box::mul(int* n)
                 for(int iatm=0;iatm<natms;iatm++)
                 {
                     for(int i=0;i<3;i++)
+                    {
                         tmp_s[tmp_icomp+i]=s[icomp+i]*r[i]+ii[i]*r[i];
+                        if(dof_xst)
+                            tmp_dof[tmp_icomp+i]=dof[icomp+i];
+                    }
                     
                     tmp_type[tmp_iatm]=type[iatm];
                     
@@ -365,12 +439,19 @@ void Box::mul(int* n)
                     tmp_icomp+=3;
                 }
             }
-    
-    delete [] type;
-    delete [] s;
+    if(natms)
+    {
+        delete [] type;
+        delete [] s;
+        if(dof_xst)
+            delete [] dof;
+    }
     
     s=tmp_s;
     type=tmp_type;
+    
+    if(dof_xst)
+        dof=tmp_dof;
     
     for(int i=0;i<3;i++)
         for(int j=0;j<3;j++)
@@ -413,7 +494,7 @@ void Box::add_vac(int dim,type0 thickness)
  --------------------------------------------*/
 void Box::ucell_chang(type0** u)
 {
-    type0 det_u,tmp0,babs;
+    type0 det_u,tmp0;
     int chk,icomp,natms_new;
     
     int* lo_bound;
@@ -428,9 +509,11 @@ void Box::ucell_chang(type0** u)
     type0** H_new;
     type0** H_x;
     
+    
     type0* s_new=NULL;
     int* type_new=NULL;
-
+    char* dof_new=NULL;
+    
 
     CREATE1D(lo_bound,3);
     CREATE1D(hi_bound,3);
@@ -503,6 +586,15 @@ void Box::ucell_chang(type0** u)
                         s_new[natms_new*3]=b[0];
                         s_new[natms_new*3+1]=b[1];
                         s_new[natms_new*3+2]=b[2];
+                        
+                        if(dof_xst)
+                        {
+                            GROW(dof_new,3*natms_new,3*natms_new+3);
+                            dof_new[natms_new*3]=dof[icomp];
+                            dof_new[natms_new*3+1]=dof[icomp+1];
+                            dof_new[natms_new*3+2]=dof[icomp+2];
+                        }
+                        
                         natms_new++;
                         
                     }
@@ -526,52 +618,9 @@ void Box::ucell_chang(type0** u)
         }
     }
     
-    
-    for (int i=0;i<3;i++)
-    {
-        sq[i]=0.0;
-        for (int j=0;j<3;j++)
-        {
-            sq[i]+=H_x[i][j]*H_x[i][j];
-            H[i][j]=0.0;
-        }
-    }
-    
-    
-    H_new[0][1]=H_new[0][2]=H_new[1][2]=0.0;
-    
-    H_new[0][0]=sqrt(sq[0]);
-    
-    for (int i=0;i<3;i++)
-        H_new[1][0]+=H_x[0][i]*H_x[1][i];
-    H_new[1][0]/=H_new[0][0];
-    
-    H_new[1][1]=sqrt(sq[1]-H_new[1][0]*H_new[1][0]);
-    
-    for (int i=0;i<3;i++)
-        H_new[2][0]+=H_x[0][i]*H_x[2][i];
-    
-    H_new[2][0]/=H_new[0][0];
-    
-    
-    b[0]=H_x[0][1]*H_x[1][2]-H_x[0][2]*H_x[1][1];
-    b[1]=H_x[0][2]*H_x[1][0]-H_x[0][0]*H_x[1][2];
-    b[2]=H_x[0][0]*H_x[1][1]-H_x[0][1]*H_x[1][0];
-    babs=sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]);
-    b[0]/=babs;
-    b[1]/=babs;
-    b[2]/=babs;
-    
-    for (int i=0;i<3;i++)
-        H_new[2][2]+=H_x[2][i]*b[i];
-    
-    
-    tmp0=sq[2]-H_new[2][2]*H_new[2][2]-H_new[2][0]*H_new[2][0];
-    if(tmp0>0.0)
-        H_new[2][1]=sqrt(tmp0);
-    else
-        H_new[2][1]=0.0;
-    
+    XMath* xmath=new XMath(xtal);
+    xmath->square2lo_tri(H_x,H_new);
+    delete xmath;
     
     for(int i=0;i<3;i++)
     {
@@ -594,14 +643,19 @@ void Box::ucell_chang(type0** u)
     {
         delete [] type;
         delete [] s;
+        if(dof_xst)
+            delete [] dof;
     }
     
-    
+
     
     H=H_new;
     s=s_new;
     type=type_new;
     natms=natms_new;
+    if(dof_xst)
+        dof_new=dof;
+
     
     M3INV_TRI_LOWER(H,B);
     
@@ -641,9 +695,12 @@ void Box::id_correction()
 
     int* new_type;
     type0* new_s;
+    char* new_dof=NULL;
     CREATE1D(new_type,natms);
     CREATE1D(new_s,natms*3);
-
+    if(dof_xst)
+        CREATE1D(new_dof,natms*3);
+    
     int icurs=0;
     for(int itype=0;itype<no_types;itype++)
     {
@@ -653,6 +710,9 @@ void Box::id_correction()
             {
                 new_type[icurs]=iatm;
                 memcpy(&new_s[icurs*3],&s[iatm*3],3*sizeof(type0));
+                if(dof_xst)
+                    memcpy(&new_dof[icurs*3],&dof[iatm*3],3*sizeof(char));
+                
                 new_type[icurs]=itype;
                 icurs++;
             }
@@ -663,11 +723,14 @@ void Box::id_correction()
     {
         delete [] type;
         delete [] s;
+        if(dof_xst)
+            delete [] dof;
     }
     
     type=new_type;
     s=new_s;
-    
+    if(dof_xst)
+        dof=new_dof;
 }
 /*--------------------------------------------
  add vaccuum at the top of the box

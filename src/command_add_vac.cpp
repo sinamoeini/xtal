@@ -50,8 +50,7 @@ int narg,char** arg):InitPtrs(xtal)
     }
     
     
-    
-    box_collection->add_vac(arg[1],dim,depth);
+    box_collection->boxes[ibox]->add_vac(dim,depth);
     
 }
 /*--------------------------------------------

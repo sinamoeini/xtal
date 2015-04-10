@@ -46,11 +46,49 @@ int narg,char** arg):InitPtrs(xtal)
         error->warning("invalid dimension: %s",arg[4]);
         return;
     }
+        
+    Box* box0=box_collection->boxes[ibox0];
+    Box* box1=box_collection->boxes[ibox1];
+    int ibox;
     
-    box_collection->join(arg[1],arg[2],arg[3],dim);
+    
+    if(strcmp(arg[1],arg[2])==0 && strcmp(arg[1],arg[3])!=0)
+    {
+        ibox=box_collection->add_unsafe();
+        box_collection->boxes[ibox]->join(box0,box1,dim);
+        box_collection->boxes[ibox]->add_name(arg[2]);
+        box_collection->del(ibox0);
+    }
+    else if(strcmp(arg[1],arg[2])!=0 && strcmp(arg[1],arg[3])==0)
+    {
+        ibox=box_collection->add_unsafe();
+        box_collection->boxes[ibox]->join(box0,box1,dim);
+        box_collection->boxes[ibox]->add_name(arg[3]);
+        box_collection->del(ibox1);
+    }
+    else if(strcmp(arg[1],arg[2])==0 && strcmp(arg[1],arg[3])==0)
+    {
+        ibox=box_collection->add_unsafe();
+        box_collection->boxes[ibox]->join(box0,box1,dim);
+        box_collection->boxes[ibox]->add_name(arg[2]);
+        box_collection->del(ibox0);
+    }
+    else
+    {
+        ibox=box_collection->find(arg[1]);
+        int box_exist=1;
+        if(ibox<0)
+        {
+            box_exist=0;
+            ibox=box_collection->add_unsafe();
+        }
+        box_collection->boxes[ibox]->join(box0,box1,dim);
+        if(box_exist==0)
+            box_collection->boxes[ibox]->add_name(arg[1]);
+        
+    }
     
 
-    
     
     
     

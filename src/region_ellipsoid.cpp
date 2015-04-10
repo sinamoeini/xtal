@@ -85,7 +85,7 @@ Region_ellipsoid::~Region_ellipsoid()
 /*--------------------------------------------
  belong
  --------------------------------------------*/
-int Region_ellipsoid::belong(type0** H,type0* s)
+inline int Region_ellipsoid::belong(type0** H,type0* s)
 {
     
     x0=H[0][0]*s[0]+H[1][0]*s[1]+H[2][0]*s[2]-x[0];

@@ -41,7 +41,7 @@ int narg,char** arg):InitPtrs(xtal)
     }
     
     
-    box_collection->mul(arg[1],n);
+    box_collection->boxes[ibox]->mul(n);
     delete [] n;
     
 }

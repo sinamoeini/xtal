@@ -1,19 +1,19 @@
-#include "command_box2cfg.h"
+#include "command_box2vasp.h"
 #include "error.h"
 #include "memory.h"
 #include "box_collection.h"
-#include "box2cfg.h"
+#include "box2vasp.h"
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Command_box2cfg::Command_box2cfg(Xtal* xtal,
+Command_box2vasp::Command_box2vasp(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
     
     if(narg!=3)
     {
-        error->warning("box2cfg command needs 2 arguments\n"
-        "SYNTAX: box2cfg box file.cfg");
+        error->warning("box2vasp command needs 2 arguments\n"
+            "SYNTAX: box2vasp box file");
         return;
     }
     
@@ -24,12 +24,18 @@ int narg,char** arg):InitPtrs(xtal)
         error->warning("%s box not found",arg[1]);
         return;
     }
+    /*
     
-    //box_collection->add(arg[1]);
+    if(!box_collection->boxes[ibox]->dof_xst)
+    {
+        error->warning("box %s does not have dof set",arg[1]);
+        return;
+    }
+    */
     
-    class Box2CFG* box2cfg=new Box2CFG(xtal,arg[1],arg[2]);
+    class Box2VASP* box2vasp=new Box2VASP(xtal,arg[1],arg[2]);
     
-    delete box2cfg;
+    delete box2vasp;
     
     
     
@@ -38,7 +44,8 @@ int narg,char** arg):InitPtrs(xtal)
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-Command_box2cfg::~Command_box2cfg()
+Command_box2vasp::~Command_box2vasp()
 {
 }
+
 

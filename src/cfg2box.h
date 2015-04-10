@@ -41,6 +41,7 @@ private:
     void dealloc();
     
     int tmp_natms;
+    int ibox;
     
     
 protected:
@@ -48,7 +49,7 @@ public:
     
     CFG2Box(Xtal*,char*,char*);
     ~CFG2Box();
-    char* box;
+    //char* box;
     
 };
 

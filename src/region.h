@@ -10,7 +10,7 @@ public:
     
     Region(Xtal*);
     virtual ~Region();
-    virtual int belong(type0**,type0*)=0;
+    virtual inline int belong(type0**,type0*)=0;
     char* region_name;
     
 };
