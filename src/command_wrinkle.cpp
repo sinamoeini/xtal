@@ -9,7 +9,7 @@ Command_wrinkle::Command_wrinkle(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
     
-    N=100;
+    N=20;
     l=10.0;
     
     
@@ -36,13 +36,16 @@ int narg,char** arg):InitPtrs(xtal)
     
     //m=0.000000285*l*l;
     
-    m=0.000000285*l*l;
+    m=1.65e-8*l*l;
     m=0.0*l*l;
     
     max_iter=100000;
     tol=1.0e-14;
     slope=0.4;
-    norm=1.0e-2*l/no;
+    norm=1.0e-1*l/no;
+    type0 eform,erelax=0.0;
+    
+    
     
     for(int j=0;j<17;j++)
     {
@@ -69,8 +72,21 @@ int narg,char** arg):InitPtrs(xtal)
         for(int i=0;i<2*(N+4);i++)
             f_norm+=f[i]*f[i];
         
-        printf("%lf %lf %lf %e \n",w/l,max_h/l,energy(),f_norm);
-        w-=0.02*l;
+        if(j==0)
+        {
+            eform=0.0;
+            erelax=energy();
+        }
+        else
+        {
+            eform=(erelax-energy())/(erelax*(no));
+        }
+        
+        
+        //printf("%lf %lf %lf %e \n",w/l,max_h/l,energy(),f_norm);
+        printf("%lf %lf\n",1-w/l,max_h/w);
+        //printf("%lf %12.10lf %e \n",1.0-w/l,eform,f_norm);
+        w-=0.005*l;
     }
      
 
@@ -333,7 +349,7 @@ void Command_wrinkle::md()
     f_f=0.0;
     for(int i=0;i<dof;i++)
         f_f+=f[i]*f[i];
-    f_norm=sqrt(f_norm);
+    f_norm=sqrt(f_f);
 
     
     iter=0;

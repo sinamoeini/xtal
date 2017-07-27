@@ -9,7 +9,7 @@ public:
     Error(Xtal *);
     ~Error();
     void abort(const char*,...);
-    void abort(int,const char*,const char*,...);
+    void abort(int,char*,const char*,...);
     void warning(const char*,...);
 };
 

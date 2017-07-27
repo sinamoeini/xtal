@@ -50,7 +50,8 @@ CFG2Box::CFG2Box(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
         }
         
     }
-    fsetpos(cfgfile,&pos);
+    
+    //fsetpos(cfgfile,&pos);
     set_box();
     
     dealloc();
@@ -62,10 +63,12 @@ CFG2Box::CFG2Box(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
     }
     
     
-    
+
     CREATE1D(s_buff,3*tmp_natms);
     CREATE1D(type_buff,tmp_natms);
     atom_cmplt=0;
+    if(tmp_natms==0)
+        atom_cmplt=1;
     curr_id=0;
     while (!atom_cmplt)
     {
@@ -78,6 +81,7 @@ CFG2Box::CFG2Box(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
             fclose(cfgfile);
             return;
         }
+        
         if(curr_id==tmp_natms)
             atom_cmplt=1;
     }
@@ -230,6 +234,7 @@ void CFG2Box::read_header()
     {
         entry_count=tmpno;
         ext_cfg=1;
+        header_cmplt=1;
         int mincomp=3+(3*vel_chk);
         if (entry_count < mincomp)
         {
@@ -274,9 +279,9 @@ void CFG2Box::read_header()
     else if(sscanf(command,"Number of particles = %d",&tmpno)==1)
     {
         tmp_natms=tmpno;
-        if(tmp_natms<=0)
+        if(tmp_natms<0)
         {
-            error->warning("Number of particles in %s file should be greater than 0",file_name);
+            error->warning("Number of particles in %s file should be greater than or equal to 0",file_name);
             if(narg)
                 delete [] command;
             delete [] strtmp2;
@@ -624,10 +629,11 @@ void CFG2Box::read_atom()
             }
             
             last_type=box_collection->boxes[ibox]->add_type(mass,arg[0]);
+            
+            
         }
         else if(narg==entry_count)
         {
-            
             type_buff[curr_id]=last_type;
             s_buff[3*curr_id]=atof(arg[0]);
             s_buff[3*curr_id+1]=atof(arg[1]);

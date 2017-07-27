@@ -46,6 +46,26 @@ int BoxCollection::add(char* name)
     return no_boxes-1;
 }
 /*--------------------------------------------
+ add a box
+ --------------------------------------------*/
+int BoxCollection::cp(char* src_name,char* des_name)
+{
+    Box** new_boxs;
+    CREATE1D(new_boxs,no_boxes+1);
+    for(int i=0;i<no_boxes;i++)
+        new_boxs[i]=boxes[i];
+    
+    int ibox=find(src_name);
+    new_boxs[no_boxes]=new Box(*boxes[ibox]);
+    new_boxs[no_boxes]->chng_name(des_name);
+    if(no_boxes)
+        delete [] boxes;
+    
+    boxes=new_boxs;
+    no_boxes++;
+    return no_boxes-1;
+}
+/*--------------------------------------------
  add a box without a name 
  name should be added later!!!!!
  --------------------------------------------*/

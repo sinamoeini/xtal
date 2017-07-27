@@ -12,10 +12,12 @@
 Command_list_id::Command_list_id(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
-    if(narg!=4)
+    if(narg!=4 && narg!=5)
     {
-        error->warning("list_id command needs 3 arguments\n"
-        "SYNTAX: list_id box region id_file");
+        error->warning("list_id command needs 3 or 4 arguments\n"
+        "SYNTAX: list_id box region id_file\n"
+        "or\n"
+        "SYNTAX: list_id box region type id_file");
         return;
     }
     
@@ -38,26 +40,39 @@ int narg,char** arg):InitPtrs(xtal)
     int natms=box_collection->boxes[ibox]->natms;
     type0** H=box_collection->boxes[ibox]->H;
     type0* s=box_collection->boxes[ibox]->s;
+
     
     int* id_lst;
     CREATE1D(id_lst,natms);
     
-    
-
 
     int icomp=0;
     int no=0;
-    for(int i=0;i<natms;i++)
+    if(narg==4)
     {
-        if(region_collection->regions[iregion]->belong(H,&s[icomp]))
-            id_lst[no++]=i;
-        icomp+=3;
+        for(int i=0;i<natms;i++)
+        {
+            if(region_collection->regions[iregion]->belong(H,&s[icomp]))
+                id_lst[no++]=i;
+            icomp+=3;
+        }
+    }
+    else
+    {
+        int itype=box_collection->boxes[ibox]->find_type(arg[3]);
+        int* type=box_collection->boxes[ibox]->type;
+        for(int i=0;i<natms;i++)
+        {
+            if(type[i]==itype && region_collection->regions[iregion]->belong(H,&s[icomp]))
+                id_lst[no++]=i;
+            icomp+=3;
+        }
     }
 
-    FILE* idfile;
-    idfile=fopen(arg[3],"w");
     
-    fprintf(idfile,"%d\n",no);
+    FILE* idfile;
+    idfile=fopen(arg[narg-1],"w");
+    
     for(int i=0;i<no;i++)
         fprintf(idfile,"%d\n",id_lst[i]);
     fclose(idfile);

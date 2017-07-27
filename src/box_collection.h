@@ -15,6 +15,7 @@ public:
     //symbol based functions
     int find(char*);
     int add(char*);
+    int cp(char*,char*);
     void del(char*);
     int add_unsafe();
     void del(int);

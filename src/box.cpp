@@ -8,18 +8,95 @@
  --------------------------------------------*/
 Box::Box(Xtal* xtal):InitPtrs(xtal)
 {
-    natms=no_types=dof_xst=0;
+    natms=nghosts=no_types=dof_xst=0;
     CREATE2D(H,3,3);
     CREATE2D(B,3,3);
 }
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Box::Box(Xtal* xtal,char* name):InitPtrs(xtal)
+Box::Box(Xtal* xtal,char* name):InitPtrs(xtal),
+atom_names(NULL),
+mass(NULL),
+type_count(NULL),
+s(NULL),
+type(NULL),
+dof(NULL)
 {
-    natms=no_types=dof_xst=0;
+    natms=nghosts=no_types=dof_xst=0;
     CREATE2D(H,3,3);
     CREATE2D(B,3,3);
+    int lngth=static_cast<int>(strlen(name))+1;
+    CREATE1D(box_name,lngth);
+    memcpy(box_name,name,lngth*sizeof(char));
+}
+/*--------------------------------------------
+ int dof_xst;
+ char* box_name;
+ 
+ int no_types;
+ char** atom_names;
+ type0* mass;
+ int* type_count;
+ 
+ type0** H;
+ type0** B;
+ 
+ int natms;
+ type0* s;
+ int* type;
+ char* dof;
+ --------------------------------------------*/
+Box::Box(Box& other):InitPtrs(other.xtal)
+{
+    natms=nghosts=no_types=dof_xst=0;
+    CREATE2D(H,3,3);
+    CREATE2D(B,3,3);
+    
+    box_name=NULL;
+    
+    for(int i=0;i<3;i++)
+        for(int j=0;j<3;j++)
+        {
+            B[i][j]=other.B[i][j];
+            H[i][j]=other.H[i][j];
+        }
+    
+    natms=other.natms;
+    nghosts=other.nghosts;
+    no_types=other.no_types;
+    dof_xst=other.dof_xst;
+    
+    
+    
+    CREATE1D(mass,no_types);
+    CREATE1D(type_count,no_types);
+    CREATE1D(atom_names,no_types);
+    for(int i=0;i<no_types;i++)
+    {
+        int len=static_cast<int>(strlen(other.atom_names[i]))+1;
+        CREATE1D(atom_names[i],len);
+        memcpy(atom_names[i],other.atom_names[i],len*sizeof(char));
+        
+    }
+    
+    
+    CREATE1D(type,natms);
+    CREATE1D(s,3*natms);
+    if(dof_xst)
+        CREATE1D(dof,natms*3);
+    
+    memcpy(type,other.type,natms*sizeof(int));
+    memcpy(s,other.s,3*natms*sizeof(type0));
+    if(dof_xst)
+        memcpy(dof,other.dof,3*natms*sizeof(char));
+}
+/*--------------------------------------------
+ change the name of the box
+ --------------------------------------------*/
+void Box::chng_name(char* name)
+{
+    delete [] box_name;
     int lngth=static_cast<int>(strlen(name))+1;
     CREATE1D(box_name,lngth);
     memcpy(box_name,name,lngth*sizeof(char));
@@ -75,11 +152,11 @@ void Box::join(Box* box0,Box* box1,int dim)
         type_count[type_ref[i]]+=box1->type_count[i];
     }
     
-    for(int iatom=0;iatom<3*box0->natms;iatom++)
+    for(int iatom=0;iatom<box0->natms;iatom++)
         type[iatom]=box0->type[iatom];
     
     if(dof_xst)
-        for(int iatom=0;iatom<box0->natms;iatom++)
+        for(int iatom=0;iatom<3*box0->natms;iatom++)
             dof[iatom]=box0->dof[iatom];
     
     for(int iatom=0;iatom<box1->natms;iatom++)
@@ -170,6 +247,123 @@ void Box::join(Box* box0,Box* box1,int dim)
     }
     
     M3INV_TRI_LOWER(H,B);
+}
+/*--------------------------------------------
+ constructor
+ --------------------------------------------*/
+void Box::join(Box* box0,Box* box1)
+{
+    if(no_types)
+    {
+        for(int i=0;i<no_types;i++)
+        {
+            delete [] atom_names[i];
+        }
+        delete [] atom_names;
+        delete [] mass;
+        delete [] type_count;
+    }
+    
+    if(natms)
+    {
+        delete [] s;
+        delete [] type;
+        
+        if(dof_xst)
+            delete [] dof;
+    }
+    natms=no_types=dof_xst=0;
+    
+    //allocate s and type
+    natms=box0->natms+box1->natms;
+    CREATE1D(s,natms*3);
+    CREATE1D(type,natms);
+    
+    dof_xst=box0->dof_xst;
+    if(dof_xst)
+        CREATE1D(dof,natms*3);
+    
+    // add the types
+    for(int i=0;i<box0->no_types;i++)
+    {
+        add_type(box0->mass[i],box0->atom_names[i]);
+        type_count[i]=box0->type_count[i];
+    }
+    
+    
+    int* type_ref;
+    CREATE1D(type_ref,box1->no_types);
+    for(int i=0;i<box1->no_types;i++)
+    {
+        type_ref[i]=add_type(box1->mass[i],box1->atom_names[i]);
+        type_count[type_ref[i]]+=box1->type_count[i];
+    }
+    
+    for(int iatom=0;iatom<box0->natms;iatom++)
+        type[iatom]=box0->type[iatom];
+    
+    if(dof_xst)
+        for(int iatom=0;iatom<3*box0->natms;iatom++)
+            dof[iatom]=box0->dof[iatom];
+    
+    for(int iatom=0;iatom<box1->natms;iatom++)
+        type[box0->natms+iatom]=type_ref[box1->type[iatom]];
+    
+    if(dof_xst)
+        for(int iatom=0;iatom<3*box1->natms;iatom++)
+            dof[3*box0->natms+iatom]=box1->dof[iatom];
+    
+    
+    delete [] type_ref;
+    // we are done with type
+    
+    
+    type0 ** A;
+    CREATE2D(A,3,3);
+    
+    for(int i=0;i<3;i++)
+        for(int j=0;j<3;j++)
+        {
+            A[i][j]=0.0;
+                for(int k=0;k<3;k++)
+                    A[i][j]+=box0->B[k][i]*box1->H[j][k];
+            
+        }
+    
+
+    // taking care of s
+    int icomp=0;
+    for(int i=0;i<box0->natms;i++)
+    {
+        for(int j=0;j<3;j++)
+            s[icomp+j]=box0->s[3*i+j];
+        icomp+=3;
+    }
+    
+    for(int i=0;i<box1->natms;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            s[icomp+j]=0.0;
+            for(int k=0;k<3;k++)
+                s[icomp+j]+=A[j][k]*box1->s[3*i+k];
+        }
+        
+        icomp+=3;
+    }
+    
+    for(int i=0;i<3;i++)
+        delete [] A[i];
+    delete [] A;
+    
+    // taking care of H and B
+    for(int i=0;i<3;i++)
+        for(int j=0;j<3;j++)
+        {
+            H[i][j]=box0->H[i][j];
+            B[i][j]=box0->B[i][j];
+        }
+    
 }
 /*--------------------------------------------
  desstructor
@@ -355,10 +549,37 @@ void Box::del_atoms(int no,int* lst)
     if(dof_xst)
         dof=dof_tmp;
     
-    for(int itype=0;itype<no_types;itype++)
+    for(int itype=no_types-1;itype>-1;itype--)
         if(type_count[itype]==0)
             del_type(itype);
 
+}
+/*--------------------------------------------
+ del a all of atoms
+ --------------------------------------------*/
+void Box::del_atoms()
+{
+    
+    if(no_types)
+    {
+        for(int i=0;i<no_types;i++)
+        {
+            delete [] atom_names[i];
+        }
+        delete [] atom_names;
+        delete [] mass;
+    }
+    
+    if(natms)
+    {
+        delete [] s;
+        delete [] type;
+        
+        if(dof_xst)
+            delete [] dof;
+    }
+    natms=no_types=0;
+    
 }
 /*--------------------------------------------
  change the name of box
@@ -392,9 +613,8 @@ void Box::mul(int* n)
     CREATE1D(r,3);
     CREATE1D(ii,3);
     for(int i=0;i<3;i++)
-    {
         nn[i]=static_cast<type0>(n[i]);
-    }
+
     
     for(int i=0;i<3;i++)
         r[i]=1.0/nn[i];
@@ -456,6 +676,7 @@ void Box::mul(int* n)
     for(int i=0;i<3;i++)
         for(int j=0;j<3;j++)
             H[i][j]*=nn[i];
+    
     M3INV_TRI_LOWER(H,B);
     
     delete [] ii;
@@ -469,7 +690,7 @@ void Box::mul(int* n)
 /*--------------------------------------------
  add vaccuum at the top of the box
  --------------------------------------------*/
-void Box::add_vac(int dim,type0 thickness)
+void Box::add_vac(int dim,int t_b,type0 thickness)
 {
     
     type0 old_thickness=
@@ -477,11 +698,24 @@ void Box::add_vac(int dim,type0 thickness)
     type0 ratio=old_thickness/(old_thickness+thickness);
     int icomp=0;
     
-    for(int iatm=0;iatm<natms;iatm++)
+    if(t_b==1)
     {
-        s[icomp+dim]*=ratio;
-        icomp+=3;
+        for(int iatm=0;iatm<natms;iatm++)
+        {
+            s[icomp+dim]*=ratio;
+            icomp+=3;
+        }
     }
+    else
+    {
+        for(int iatm=0;iatm<natms;iatm++)
+        {
+            s[icomp+dim]*=ratio;
+            s[icomp+dim]+=1.0-ratio;
+            icomp+=3;
+        }
+    }
+
     
     ratio=(old_thickness+thickness)/old_thickness;
     for(int i=0;i<3;i++)
@@ -775,4 +1009,143 @@ void Box::del_type(int itype)
             type[i]--;
     no_types--;
 }
+
+/*--------------------------------------------
+ add vaccuum at the top of the box
+ --------------------------------------------*/
+void Box::rm_frac(int dim,type0 s_lo,type0 s_hi)
+{
+    type0 ds=s_hi-s_lo;
+    
+    int list_sz=0;
+    int* list=NULL;
+    
+    for(int i=dim;i<natms*3;i+=3)
+    {
+        if(s[i]<s_lo)
+        {
+            s[i]/=1.0-ds;
+        }
+        else if(s[i]>=s_hi)
+        {
+            s[i]-=ds;
+            s[i]/=1.0-ds;
+        }
+        else
+        {
+            GROW(list,list_sz,list_sz+1);
+            list[list_sz++]=i/3;
+        }
+    }
+    
+    
+    
+    if(list_sz)
+    {
+        del_atoms(list_sz,list);
+        delete [] list;
+        list_sz=0;
+    }
+    
+    for(int i=0;i<3;i++)
+        H[dim][i]*=1.0-ds;
+    
+    M3INV_TRI_LOWER(H,B);
+}
+
+
+/*--------------------------------------------
+ add image at a specific direction
+ --------------------------------------------*/
+void Box::add_image(int idir,type0 s_cut)
+{
+    int s_size=(nghosts+natms)*3;
+    int type_size=nghosts+natms;
+    
+    Arr<type0> _s_(s,s_size,3*type_size/10);
+    Arr<int> _type_(type,type_size,type_size/10);
+    
+    type0 s_tmp[3];
+    int type_tmp;
+    for(int i=0;i<natms;i++)
+    {
+        type_tmp=type[i];
+        
+        s_tmp[0]=s[3*i];
+        s_tmp[1]=s[3*i+1];
+        s_tmp[2]=s[3*i+2];
+        
+        s_tmp[idir]++;
+        while(s_tmp[idir]<s_cut+1.0)
+        {
+            _s_(s_tmp);
+            _type_(type_tmp);
+            s_tmp[idir]++;
+        }
+        
+        
+        s_tmp[0]=s[3*i];
+        s_tmp[1]=s[3*i+1];
+        s_tmp[2]=s[3*i+2];
+        
+        s_tmp[idir]--;
+        while(s_tmp[idir]>=-s_cut)
+        {
+            _s_(s_tmp);
+            _type_(type_tmp);
+            s_tmp[idir]--;
+        }
+        
+    }
+    
+    nghosts=type_size-natms;
+}
+/*--------------------------------------------
+ add image at a specific direction
+ --------------------------------------------*/
+void Box::add_ghost(bool (&dirs)[3],type0 (&s_cut)[3] )
+{
+    for(int idim=0;idim<3;idim++)
+    {
+        if(!dirs[idim]) continue;
+        
+        add_image(idim,s_cut[idim]);
+    }
+}
+/*--------------------------------------------
+ add image at a specific direction
+ --------------------------------------------*/
+void Box::del_ghost()
+{
+    if(nghosts==0)
+        return;
+    
+    type0* s_=new type0[3*natms];
+    int* type_=new int[natms];
+    memcpy(s_,s,3*natms*sizeof(type0));
+    memcpy(type_,type,natms*sizeof(int));
+    nghosts=0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

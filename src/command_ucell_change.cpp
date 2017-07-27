@@ -9,11 +9,6 @@
 Command_ucell_change::Command_ucell_change(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
-    /*
-    error->warning("ucell_change not ready yet");
-    return;
-    */
-    
     if(narg!=5)
     {
         error->warning("ucell_change command needs 4 arguments\n"

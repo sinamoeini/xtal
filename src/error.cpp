@@ -35,8 +35,8 @@ void Error::abort(const char* msg,...)
 /*--------------------------------------------
  output the error line and abort the code
  --------------------------------------------*/
-void Error::abort(int line,const char* file
-                  ,const char* msg,...)
+void Error::abort(int line,char* file
+,const char* msg,...)
 {
     char err_msg[MAX_CHAR];
     

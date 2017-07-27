@@ -1,18 +1,17 @@
-#include "command_add_vac.h"
+#include "command_rm_thickness.h"
 #include "error.h"
 #include "memory.h"
 #include "box_collection.h"
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Command_add_vac::Command_add_vac(Xtal* xtal,
+Command_rm_thickness::Command_rm_thickness(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
-    int t_b;
-    if(narg!=4)
+    if(narg!=5)
     {
-        error->warning("add_vac command needs 3 arguments\n"
-        "SYNTAX: add_vac box dim vaccuum_thickness");
+        error->warning("rm_thickness command needs 4 arguments\n"
+        "SYNTAX: rm_thickness box dim s_lo s_hi");
         return;
     }
     
@@ -23,57 +22,54 @@ int narg,char** arg):InitPtrs(xtal)
         return;
     }
     
-    type0 depth;
+
     int dim;
     if(strcmp(arg[2],"x")==0)
     {
         dim=0;
-        t_b=1;
     }
     else if(strcmp(arg[2],"y")==0)
     {
         dim=1;
-        t_b=1;
     }
     else if(strcmp(arg[2],"z")==0)
     {
         dim=2;
-        t_b=1;
-    }
-    else if(strcmp(arg[2],"-x")==0)
-    {
-        dim=0;
-        t_b=-1;
-    }
-    else if(strcmp(arg[2],"-y")==0)
-    {
-        dim=1;
-        t_b=-1;
-    }
-    else if(strcmp(arg[2],"-z")==0)
-    {
-        dim=2;
-        t_b=-1;
     }
     else
     {
         error->warning("invalid dimension: %s",arg[2]);
         return;
     }
-    depth=atof(arg[3]);
     
-    if(depth<=0.0)
+    type0 s_lo,s_hi;
+    
+    s_lo=atof(arg[3]);
+    s_hi=atof(arg[4]);
+    
+    if(s_lo<0.0 || s_lo>1.0)
     {
-        error->warning("thickness of vaccuum cannot be less than 0.0");
+        error->warning("s_lo must be between 0.0 & 1.0");
         return;
     }
+    if(s_hi<0.0 || s_hi>1.0)
+    {
+        error->warning("s_hi must be between 0.0 & 1.0");
+        return;
+    }
+    if(s_lo>=s_hi)
+    {
+        error->warning("s_hi must be greater than s_lo");
+        return;
+    }
+
     
-    box_collection->boxes[ibox]->add_vac(dim,t_b,depth);
+    box_collection->boxes[ibox]->rm_frac(dim,s_lo,s_hi);
     
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-Command_add_vac::~Command_add_vac()
+Command_rm_thickness::~Command_rm_thickness()
 {
 }

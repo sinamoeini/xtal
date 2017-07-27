@@ -231,7 +231,11 @@ void Xtal::read_line()
     rl_readline_name=(char*)"xtal-0.0$ ";
     rl_attempted_completion_function=completion;
     */
+#ifdef __APPLE__
     rl_completion_entry_function=(Function*)command_generator;
+#elif __linux__
+    rl_completion_entry_function=command_generator;
+#endif
     FILE* tmp_input;
     tmp_input=fopen(".input","w");
     char* line,shell_prompt[100];

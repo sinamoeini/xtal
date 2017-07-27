@@ -15,14 +15,27 @@ Command_del_atoms::Command_del_atoms(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
     
-    if(narg<4)
+    
+    /*
+     del_atoms <box> keywords 
+     keywords:
+        region <include>/<exclude> <region>
+        random <type> <seed>
+        file <id_file>
+        all
+     */
+    
+    
+    if(narg<3)
     {
         error->warning("del_atoms command needs at least 4 arguments\n"
         "SYNTAX: del_atoms region include/exclude box region0 region1 ...\n"
         "or\n"
         "SYNTAX: del_atoms random box type fraction seed\n"
         "or\n"
-        "SYNTAX: del_atoms id box file0 file1 ...\n");
+        "SYNTAX: del_atoms id box file0 file1 ...\n"
+        "or\n"
+        "SYNTAX: del_atoms all box\n");
         return;
     }
     
@@ -141,7 +154,7 @@ int narg,char** arg):InitPtrs(xtal)
         }
         type0 frac=atof(arg[4]);
         type0 frac_ach;
-        if(frac>=1.0 || frac<=0.0)
+        if(frac>1.0 || frac<=0.0)
         {
             error->warning("fraction should be between 0.0 and 1.0");
             return;
@@ -308,6 +321,25 @@ int narg,char** arg):InitPtrs(xtal)
         
         
         
+        
+    }
+    else if(strcmp(arg[1],"all")==0)
+    {
+        if(narg!=3)
+        {
+            error->warning("del_atoms command needs 2 arguments\n"
+            "SYNTAX: del_atoms all box\n");
+            return;
+        }
+        
+        int ibox=box_collection->find(arg[2]);
+        if(ibox<0)
+        {
+            error->warning("box %s not found",arg[2]);
+            return;
+        }
+        
+        box_collection->boxes[ibox]->del_atoms();
         
     }
     else

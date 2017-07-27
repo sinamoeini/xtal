@@ -46,13 +46,13 @@ Region_block::Region_block(Xtal* xtal
                 bond[2*i]=tmp0;
                 bond[2*i+1]=tmp1;
                 
-                if(tmp0<0.0 || tmp0>=1.0)
+                if(tmp0<0.0 || tmp0>1.0)
                 {
                     error->warning("block boundary should between 0.0 & 1.0");
                     xtal->error_flag=-1;
                     return;
                 }
-                if(tmp1<0.0 || tmp1>=1.0)
+                if(tmp1<0.0 || tmp1>1.0)
                 {
                     error->warning("block boundary should between 0.0 & 1.0");
                     xtal->error_flag=-1;
@@ -73,7 +73,7 @@ Region_block::Region_block(Xtal* xtal
                     bond_st[2*i]=0;
                     bond[2*i+1]=tmp1;
                     
-                    if(tmp1<0.0 || tmp1>=1.0)
+                    if(tmp1<0.0 || tmp1>1.0)
                     {
                         error->warning("block boundary should between 0.0 & 1.0");
                         xtal->error_flag=-1;
@@ -85,7 +85,7 @@ Region_block::Region_block(Xtal* xtal
                     bond_st[2*i+1]=0;
                     bond[2*i]=tmp0;
                     
-                    if(tmp0<0.0 || tmp0>=1.0)
+                    if(tmp0<0.0 || tmp0>1.0)
                     {
                         error->warning("block boundary should between 0.0 & 1.0");
                         xtal->error_flag=-1;

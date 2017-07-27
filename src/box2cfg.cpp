@@ -49,9 +49,8 @@ Box2CFG::Box2CFG(Xtal* xtal,char* box,char* name):InitPtrs(xtal)
         for(int iatm=0;iatm<natms;iatm++)
         {
             if(type[iatm]==itype)
-            {
                 fprintf(cfgfile,"%18.16lf %18.16lf %18.16lf\n",s[icomp],s[icomp+1],s[icomp+2]);
-            }
+                
             icomp+=3;
         }
     }

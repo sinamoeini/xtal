@@ -22,6 +22,11 @@ using namespace std;
         template <typename TYPE>
         TYPE* fcreate(TYPE*& array,int d0,const char* name,int line_no,const char* file,const char* function)
         {
+            if(d0==0)
+            {
+                array=NULL;
+                return NULL;
+            }
             //array = NULL;
             try
             {

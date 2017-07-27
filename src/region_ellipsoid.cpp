@@ -13,7 +13,7 @@ Region_ellipsoid::Region_ellipsoid(Xtal* xtal
     if(narg!=4)
     {
         error->warning("region ellipsoid needs 3 arguments\n"
-                       "SYNTAX: ellipsoid name (c0,c1,c2) (a0,a1,a2)");
+        "SYNTAX: ellipsoid name (c0,c1,c2) (a0,a1,a2)");
         xtal->error_flag=-1;
         return;
         
@@ -41,6 +41,8 @@ Region_ellipsoid::Region_ellipsoid(Xtal* xtal
         return;
     }
     
+    
+    tmp0=tmp1=tmp2=1.0;
     if(sscanf(arg[3],"(%lf,%lf,%lf)",&tmp0,&tmp1,&tmp2)==3)
     {
         
@@ -60,6 +62,114 @@ Region_ellipsoid::Region_ellipsoid(Xtal* xtal
         asq_inv[1]=1.0/(asq_inv[1]*asq_inv[1]);
         asq_inv[2]=1.0/(asq_inv[2]*asq_inv[2]);
         
+    }
+    else if(sscanf(arg[3],"(inf,%lf,%lf)",&tmp1,&tmp2)==2)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=0.0;
+        asq_inv[1]=1.0/(asq_inv[1]*asq_inv[1]);
+        asq_inv[2]=1.0/(asq_inv[2]*asq_inv[2]);
+    }
+    else if(sscanf(arg[3],"(%lf,inf,%lf)",&tmp0,&tmp2)==2)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=1.0/(asq_inv[0]*asq_inv[0]);
+        asq_inv[1]=0.0;
+        asq_inv[2]=1.0/(asq_inv[2]*asq_inv[2]);
+    }
+    else if(sscanf(arg[3],"(%lf,%lf,inf)",&tmp0,&tmp1)==2)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=1.0/(asq_inv[0]*asq_inv[0]);
+        asq_inv[1]=1.0/(asq_inv[1]*asq_inv[1]);
+        asq_inv[2]=0.0;
+    }
+    else if(sscanf(arg[3],"(%lf,inf,inf)",&tmp0)==1)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=1.0/(asq_inv[0]*asq_inv[0]);
+        asq_inv[1]=0.0;
+        asq_inv[2]=0.0;
+    }
+    else if(sscanf(arg[3],"(inf,%lf,inf)",&tmp1)==1)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=0.0;
+        asq_inv[1]=1.0/(asq_inv[1]*asq_inv[1]);
+        asq_inv[2]=0.0;
+    }
+    else if(sscanf(arg[3],"(inf,inf,%lf)",&tmp2)==1)
+    {
+        asq_inv[0]=tmp0;
+        asq_inv[1]=tmp1;
+        asq_inv[2]=tmp2;
+        
+        for(int i=0;i<3;i++)
+            if(asq_inv[i]<=0.0)
+            {
+                error->warning("a[%d] should be greater than 0.0",i);
+                xtal->error_flag=-1;
+                return;
+            }
+        
+        asq_inv[0]=0.0;
+        asq_inv[1]=0.0;
+        asq_inv[2]=1.0/(asq_inv[2]*asq_inv[2]);
     }
     else
     {

@@ -26,5 +26,3 @@ int narg,char** arg):InitPtrs(xtal)
 Command_add_region::~Command_add_region()
 {
 }
-
-

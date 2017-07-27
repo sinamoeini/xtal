@@ -1,4 +1,4 @@
-#include "command_mul.h"
+#include "command_cp.h"
 #include "memory.h"
 #include "error.h"
 #include "box2cfg.h"
@@ -6,14 +6,14 @@
 /*--------------------------------------------
  constructor
  --------------------------------------------*/
-Command_mul::Command_mul(Xtal* xtal,
+Command_cp::Command_cp(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
 
-    if(narg!=5)
+    if(narg!=3)
     {
-        error->warning("mul command needs 4 arguments\n"
-        "SYNTAX: mul box N_x N_y N_z");
+        error->warning("cp command needs 2 arguments\n"
+        "SYNTAX: cp src_box des_box");
         return;
     }
     
@@ -24,31 +24,23 @@ int narg,char** arg):InitPtrs(xtal)
         return;
     }
     
-    int* n;
-    CREATE1D(n,3);
-    n[0]=atoi(arg[2]);
-    n[1]=atoi(arg[3]);
-    n[2]=atoi(arg[4]);
-
-    for(int i=0;i<3;i++)
+    
+    int jbox=box_collection->find(arg[2]);
+    if(jbox>=0)
     {
-        if(n[0]<=0)
-        {
-            error->warning("mul argumets should be larger than 0");
-            delete [] n;
+        if(jbox!=ibox)
+            box_collection->del(jbox);
+        else
             return;
-        }
     }
     
-    
-    box_collection->boxes[ibox]->mul(n);
-    delete [] n;
+    box_collection->cp(arg[1],arg[2]);
     
 }
 /*--------------------------------------------
  destructor
  --------------------------------------------*/
-Command_mul::~Command_mul()
+Command_cp::~Command_cp()
 {
 }
 

@@ -9,10 +9,11 @@ Command_join::Command_join(Xtal* xtal,
 int narg,char** arg):InitPtrs(xtal)
 {
     
-    if(narg!=5)
+    if(narg!=5 && narg!=4)
     {
-        error->warning("join command needs 4 arguments\n"
-        "SYNTAX: join box box_0 box_1 dim");
+        error->warning("join command needs 3 or 4 arguments\n"
+        "SYNTAX: join box box_0 box_1 dim\n"
+        "SYNTAX: join box box_0 box_1\n");
         return;
     }
     
@@ -28,24 +29,32 @@ int narg,char** arg):InitPtrs(xtal)
         error->warning("%s box not found",arg[3]);
         return;
     }
-    int dim;
-    if(strcmp(arg[4],"x")==0)
+    
+    
+    
+    int dim=-1;
+    
+    if(narg==5)
     {
-        dim=0;
+        if(strcmp(arg[4],"x")==0)
+        {
+            dim=0;
+        }
+        else if(strcmp(arg[4],"y")==0)
+        {
+            dim=1;
+        }
+        else if(strcmp(arg[4],"z")==0)
+        {
+            dim=2;
+        }
+        else
+        {
+            error->warning("invalid dimension: %s",arg[4]);
+            return;
+        }
     }
-    else if(strcmp(arg[4],"y")==0)
-    {
-        dim=1;
-    }
-    else if(strcmp(arg[4],"z")==0)
-    {
-        dim=2;
-    }
-    else
-    {
-        error->warning("invalid dimension: %s",arg[4]);
-        return;
-    }
+
         
     Box* box0=box_collection->boxes[ibox0];
     Box* box1=box_collection->boxes[ibox1];
@@ -55,7 +64,11 @@ int narg,char** arg):InitPtrs(xtal)
     if(strcmp(arg[1],arg[2])==0 && strcmp(arg[1],arg[3])!=0)
     {
         ibox=box_collection->add_unsafe();
-        box_collection->boxes[ibox]->join(box0,box1,dim);
+        if(narg==5)
+            box_collection->boxes[ibox]->join(box0,box1,dim);
+        else
+            box_collection->boxes[ibox]->join(box0,box1);
+        
         box_collection->boxes[ibox]->add_name(arg[2]);
         box_collection->del(ibox0);
     }
@@ -63,6 +76,11 @@ int narg,char** arg):InitPtrs(xtal)
     {
         ibox=box_collection->add_unsafe();
         box_collection->boxes[ibox]->join(box0,box1,dim);
+        if(narg==5)
+            box_collection->boxes[ibox]->join(box0,box1,dim);
+        else
+            box_collection->boxes[ibox]->join(box0,box1);
+        
         box_collection->boxes[ibox]->add_name(arg[3]);
         box_collection->del(ibox1);
     }
@@ -70,6 +88,10 @@ int narg,char** arg):InitPtrs(xtal)
     {
         ibox=box_collection->add_unsafe();
         box_collection->boxes[ibox]->join(box0,box1,dim);
+        if(narg==5)
+            box_collection->boxes[ibox]->join(box0,box1,dim);
+        else
+            box_collection->boxes[ibox]->join(box0,box1);
         box_collection->boxes[ibox]->add_name(arg[2]);
         box_collection->del(ibox0);
     }
@@ -82,7 +104,12 @@ int narg,char** arg):InitPtrs(xtal)
             box_exist=0;
             ibox=box_collection->add_unsafe();
         }
-        box_collection->boxes[ibox]->join(box0,box1,dim);
+        
+        if(narg==5)
+            box_collection->boxes[ibox]->join(box0,box1,dim);
+        else
+            box_collection->boxes[ibox]->join(box0,box1);
+        
         if(box_exist==0)
             box_collection->boxes[ibox]->add_name(arg[1]);
         
